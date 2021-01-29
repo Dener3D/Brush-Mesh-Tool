@@ -9,3 +9,4 @@ Copy the folder addons/waterways into your project and activate the add-on from 
 
 After the addon is active, you can add a Brush Mesh node to the scene.
 
+![cover](https://user-images.githubusercontent.com/20520306/106318882-5997ef80-624f-11eb-8108-bf437365144f.jpg)
