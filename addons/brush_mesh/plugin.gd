@@ -5,6 +5,12 @@ extends EditorPlugin
 var mesh_paint: BrushMesh
 var IsPainting := false
 var brush
+var interval = 1.0
+var timer = 0.0
+
+	
+func _on_mode_change(mode) -> void:
+	print(mode)
 
 func _ready():
 	set_input_event_forwarding_always_enabled()
@@ -47,8 +53,10 @@ func forward_spatial_gui_input(camera, event) -> bool:
 		var position3D = space_state.intersect_ray(from,to)
 		var t
 		
+		
 		if (position3D.size() == 0):
 			return false
+			
 		
 		if (mesh_paint.paint or mesh_paint.delete):
 			brush.transform.origin = position3D.position
@@ -57,10 +65,13 @@ func forward_spatial_gui_input(camera, event) -> bool:
 			brush.transform.basis = t.basis.scaled(Vector3(mesh_paint.radius, mesh_paint.radius, mesh_paint.radius))
 		
 		if (IsPainting):
-			if (mesh_paint.delete):
-				mesh_paint.DeleteMesh(position3D.position)
-			else:
-				mesh_paint.PaintMesh(position3D.position, position3D.normal, from, to)
+			timer += 0.5
+			if timer >= interval:
+				if (mesh_paint.delete):
+					mesh_paint.DeleteMesh(position3D.position)
+				else:
+					mesh_paint.PaintMesh(position3D.position, position3D.normal, from, to)
+				timer = 0.0
 
 	if (event is InputEventMouseButton and event.button_index == BUTTON_LEFT):
 		if event.is_pressed():

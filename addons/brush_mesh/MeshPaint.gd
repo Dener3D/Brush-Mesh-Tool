@@ -2,11 +2,12 @@
 tool
 extends MultiMeshInstance
 
-class_name BrushMesh
+class_name Brushmesh
 
 const cursor_material = preload("res://addons/Material/cursor_material.tres")
-const turret = preload("res://addons/Meshes/Turret.obj")
 
+export(Mesh) var mesh_obj = null setget setMesh
+export(Material) var material = null setget setMaterial
 export(bool) var paint = false setget setPaint
 export(bool) var delete = false setget setDelete
 export(float, 0.5, 15) var radius = 1.0 setget setRadius
@@ -18,27 +19,42 @@ var size_action = false
 export(int, 1, 15) var density = 1 setget setDensity
 
 var positions = []
+var positionsLOD = []
+var rotationsLOD = []
 var rotations = []
+
 var scales = []
-var qtd_multimesh = []
+var qtd_multimesh_obj = []
 var brush
+var mesh_obj_scale
+var _from
 var mesh_scale
+
+func setMesh(value) -> void:
+	mesh_obj = value
+	self.multimesh.mesh = value
+	if (material != null):
+		self.multimesh.mesh.surface_set_material(0, material)
+	
+func setMaterial(value) -> void:
+	material = value
+	self.multimesh.mesh.surface_set_material(0, value)
 
 func setPaint(value) -> void:
 	paint = value
 	if (paint):
-		get_child(0).visible = true
+		brush.visible = true
 	else:
 		if (!delete):
-			get_child(0).visible = false
+			brush.visible = false
 	
 func setDelete(value) -> void:
 	delete = value
 	if (delete):
-		get_child(0).visible = true
+		brush.visible = true
 	else:
 		if (!paint):
-			get_child(0).visible = false
+			brush.visible = false
 
 func _enter_tree():
 	self.set_meta("_edit_lock_", true)
@@ -46,18 +62,19 @@ func _enter_tree():
 	brush.mesh = PlaneMesh.new()
 	brush.name = "Brush"
 	brush.material_override = cursor_material
+	brush.transform.origin = Vector3(0,0,0)
 	add_child(brush)
-	brush.set_owner(get_tree().get_edited_scene_root())
 	brush.visible = false
 	
 	var multimesh = MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
-	multimesh.mesh = turret
 	self.multimesh = multimesh
+	
+	
 
 func setVisibleCount(value) -> void:
 	visible_instance_count = value
-	self.multimesh.visible_instance_count = value
+	self.multimesh_obj.visible_instance_count = value
 
 func setRadius(value) -> void:
 	radius = value
@@ -93,29 +110,45 @@ func setMaxScale(valor) -> void:
 		var b = align.basis.scaled(Vector3(scales[x], scales[x], scales[x]))
 		var t = Transform(b, positions[x])
 		self.multimesh.set_instance_transform(x, t)
-		#var rand_scale = rand_range(min_scale, max_scale)
-		#mesh_scale = rand_scale
-		#scales.append(mesh_scale)
-		#self.multimesh.get_instance_transform(x).basis.scaled(Vector3(mesh_scale, mesh_scale, mesh_scale))
-		
-		#var b = Basis(Vector3(mesh_scale, 0, 0), Vector3(0,mesh_scale, 0), Vector3(0,0,mesh_scale)).rotated(Vector3(rotations[x].z, rotations[x].y, -rotations[x].x), deg2rad(90))
-		#var t = Transform(b, positions[x])
-		
-		#self.multimesh.set_instance_transform(x, t)
-			
+	
 
 func setDensity(value) -> void:
 	density = value
 
 func setClear(value) -> void:
 	clearAll = value
-	positions.clear()
-	rotations.clear()
-	self.multimesh.instance_count = 0
+	if (value):
+		positions.clear()
+		rotations.clear()
+		scales.clear()
+		self.multimesh.instance_count = 0
+			
+	
+func setFov(FOV, from) -> void:	
+	for x in range(positions.size()):
+		var dist = positions[x].distance_to(from)
+		if (dist > FOV):
+			positionsLOD.append(positions[x])
+			rotationsLOD.append(rotations[x])
+			positions.remove(x)
+			rotations.remove(x)
+			self.multimesh_obj.instance_count -= 1
+			
+	
+	for y in range(positionsLOD.size()):
+		var dist = positionsLOD[y].distance_to(from)
+		if (dist < FOV):
+			positions.append(positionsLOD[y])
+			rotations.append(rotationsLOD[y])
+			positionsLOD.remove(y)
+			rotationsLOD.remove(y)
+			self.multimesh_obj.instance_count += 1
+			
 
 func PaintMesh(value, rot, from, to) -> void:
 	if not Engine.editor_hint:
 		return
+	_from = from
 	if (value == null):
 		return
 	if (paint):
@@ -123,22 +156,25 @@ func PaintMesh(value, rot, from, to) -> void:
 			var space_state = get_tree().get_root().get_world().direct_space_state
 			var rand_ray = rand_range(-radius, radius)
 			var rand_rayz = rand_range(-radius, radius)
-			var position3D = space_state.intersect_ray(from + Vector3(rand_ray,rand_ray,rand_rayz),to + Vector3(rand_ray,rand_ray,rand_rayz))
+			var position3D = space_state.intersect_ray(Vector3(from.x + rand_ray, from.y, from.z + rand_rayz),to)
 			
 			if (position3D.size() == 0):
 				return	
-		
+
 			var randPos = Vector3()
-			multimesh.instance_count += 1
 			var distance = radius 
 			randPos = Vector3(position3D.position.x, position3D.position.y, position3D.position.z)	
-			
-			positions.append(randPos)
-			rotations.append(rot)
 			var rand_scale = rand_range(min_scale, max_scale)
-			scales.append(rand_scale)
-			updatePos()
 			
+			scales.append(rand_scale)
+			positions.append(randPos)
+			rotations.append(position3D.normal)
+			self.multimesh.instance_count += 1
+			updatePos()
+
+			
+		
+
 func DeleteMesh(value) -> void:
 	if not Engine.editor_hint:
 		return
@@ -153,24 +189,20 @@ func DeleteMesh(value) -> void:
 				scales.remove(x)
 				self.multimesh.instance_count -= 1
 				updatePos()
-				
+		
+
 func updatePos() -> void:
+	pass
 	for x in range(positions.size()):
-		#var b = Basis(Vector3(scales[x], 0, 0), Vector3(0,scales[x], 0), Vector3(0,0,scales[x]))#.rotated(Vector3(rotations[x].x, rotations[x].y, rotations[x].z), deg2rad(90))
-		var align = align_with_y(Transform(brush.transform.basis, positions[x]), rotations[x])
+		var align = align_with_y(Transform(self.multimesh.get_instance_transform(x).basis, positions[x]), rotations[x])
 		var b = align.basis.scaled(Vector3(scales[x], scales[x], scales[x]))
 		var t = Transform(b, positions[x])
 		self.multimesh.set_instance_transform(x, t)
-	
+		
+				
 func align_with_y(xform, new_y):
 	xform.basis.y = new_y
 	xform.basis.x = -xform.basis.z.cross(new_y)
 	xform.basis = xform.basis.orthonormalized()
 	return xform
 	
-		
-	
-
-
-
-
