@@ -2,7 +2,7 @@
 tool
 extends MultiMeshInstance
 
-class_name Brushmesh
+class_name BrushMesh
 
 const cursor_material = preload("res://addons/Material/cursor_material.tres")
 
