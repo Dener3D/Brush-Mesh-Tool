@@ -23,6 +23,8 @@ Ps: Don't set a too hight density value. It may decreases performance.
 
 > Random Rotation
 
+> Random Scale
+
 > Clear All
 
 > Save multimesh
