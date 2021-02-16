@@ -1,8 +1,0 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=2]
-
-[ext_resource path="res://addons/brush_mesh/Shaders/decal.shader" type="Shader" id=1]
-
-[resource]
-shader = ExtResource( 1 )
-shader_param/u_terrain_inverse_transform = Transform( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 )
-shader_param/u_terrain_normal_basis = Basis( -0.9, 0, 0, 0, -0.9, 0, 0, 0, -0.9 )
