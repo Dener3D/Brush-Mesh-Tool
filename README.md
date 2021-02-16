@@ -13,5 +13,5 @@ Just check the "paint checkbox" and it's ready for use.
 
 Ps: Don't set a too hight density value. It may decreases performance.
 
-![cover](https://user-images.githubusercontent.com/20520306/106318882-5997ef80-624f-11eb-8108-bf437365144f.jpg)
+![Sem título](https://user-images.githubusercontent.com/20520306/108110460-09ec5d00-7072-11eb-8118-7a53804ea094.jpg)
 
