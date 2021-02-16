@@ -9,7 +9,9 @@ Copy the folder addons/brush_mesh into your project and activate the add-on from
 
 After the addon is active, you can add a Brush Mesh node to the scene.
 
-Just check the "paint checkbox" and it's ready for use.
+You need select a mesh and a material before to start painting. After that, just check the "paint checkbox" and it's ready for use.
+
+You can set the min and max scale, and random Y rotation.
 
 Ps: Don't set a too hight density value. It may decreases performance.
 
@@ -28,3 +30,5 @@ Ps: Don't set a too hight density value. It may decreases performance.
 > Clear All
 
 > Save multimesh
+
+> Align to terrain
